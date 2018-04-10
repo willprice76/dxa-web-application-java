@@ -3,7 +3,10 @@ package com.sdl.dxa.caching.wrapper;
 import com.sdl.dxa.api.datamodel.model.EntityModelData;
 import com.sdl.dxa.api.datamodel.model.MvcModelData;
 import com.sdl.dxa.api.datamodel.model.PageModelData;
+import com.sdl.dxa.caching.LocalizationAwareCacheKey;
 import com.sdl.dxa.caching.LocalizationAwareKeyGenerator;
+import com.sdl.dxa.caching.NamedCacheProvider;
+import com.sdl.dxa.caching.WebRequestContextLocalizationIdProvider;
 import com.sdl.webapp.common.api.WebRequestContext;
 import com.sdl.webapp.common.api.localization.Localization;
 import org.junit.Before;
@@ -14,13 +17,12 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.cache.Cache;
-import javax.cache.CacheManager;
 import java.util.function.Supplier;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -40,7 +42,9 @@ public class CacheTest {
         when(localization.getId()).thenReturn("42");
         when(webRequestContext.getLocalization()).thenReturn(localization);
         keyGenerator = new LocalizationAwareKeyGenerator();
-        ReflectionTestUtils.setField(keyGenerator, "webRequestContext", webRequestContext);
+        WebRequestContextLocalizationIdProvider localizationIdProvider = new WebRequestContextLocalizationIdProvider();
+        ReflectionTestUtils.setField(localizationIdProvider, "webRequestContext", webRequestContext);
+        ReflectionTestUtils.setField(keyGenerator, "localizationIdProvider", localizationIdProvider);
     }
 
     @Test
@@ -59,7 +63,7 @@ public class CacheTest {
         pagesCopyingCache.setKeyGenerator(keyGenerator);
         entitiesCache.setKeyGenerator(keyGenerator);
         MvcModelData mvcData = new MvcModelData("a", "a", "a", "c", "v", null);
-        PageModelData pageData = (PageModelData) new PageModelData("1", null, null, null, "/url")
+        PageModelData pageData = (PageModelData) new PageModelData("1", null, null, null, null, null, "/url")
                 .setMvcData(mvcData);
         EntityModelData entityMvcData = (EntityModelData) new EntityModelData("2", null, null, null, null, mvcData, "1", "/url", null, null, null)
                 .setMvcData(mvcData);
@@ -74,14 +78,16 @@ public class CacheTest {
     }
 
     private void shouldReturnNeededCache(Supplier<SimpleCacheWrapper<?, ?>> supplier, String cacheName) {
-        CacheManager cacheManager = mock(CacheManager.class);
         Cache cache = mock(Cache.class);
-        doReturn(cache).when(cacheManager).getCache(eq(cacheName));
+
+        NamedCacheProvider cacheProvider = mock(NamedCacheProvider.class);
+        //noinspection unchecked
+        when(cacheProvider.getCache(eq(cacheName), any(Class.class), any(Class.class))).thenReturn(cache);
 
         SimpleCacheWrapper<?, ?> objectCache = supplier.get();
-        objectCache.setCacheManager(cacheManager);
+        objectCache.setCacheProvider(cacheProvider);
 
-        Cache<Object, ?> actual = objectCache.getCache();
+        Cache<LocalizationAwareCacheKey, ?> actual = objectCache.getCache();
         assertSame(cache, actual);
     }
 }

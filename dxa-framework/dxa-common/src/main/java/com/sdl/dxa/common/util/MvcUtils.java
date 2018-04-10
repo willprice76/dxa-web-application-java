@@ -6,6 +6,11 @@ import com.sdl.webapp.common.util.StringUtils;
 
 import java.util.List;
 
+/**
+ * MVC utils to work with String MVC Data.
+ *
+ * @dxa.publicApi
+ */
 public final class MvcUtils {
 
     private MvcUtils() {
@@ -20,8 +25,20 @@ public final class MvcUtils {
      * @throws IllegalArgumentException if format is wrong
      */
     public static MvcModelData parseMvcQualifiedViewName(String qualifiedViewName) {
+        return parseMvcQualifiedViewName(qualifiedViewName, true);
+    }
 
-        List<String> parts = Splitter.on(":").omitEmptyStrings().splitToList(StringUtils.dashify(qualifiedViewName));
+    /**
+     * Builds a {@link MvcModelData} from a qualified view name.
+     *
+     * @param qualifiedViewName    fully qualified name in a defined format. Format must be 'ViewName'
+     *                             or 'AreaName:ViewName' or 'AreaName:ControllerName:ViewName.'
+     * @param replaceSpaceWithDash defines if spaces in ViewName need to be replaced with '-'
+     * @return a {@link MvcModelData} with existing fields initiated
+     * @throws IllegalArgumentException if format is wrong
+     */
+    public static MvcModelData parseMvcQualifiedViewName(String qualifiedViewName, boolean replaceSpaceWithDash) {
+        List<String> parts = Splitter.on(":").omitEmptyStrings().splitToList(replaceSpaceWithDash ? StringUtils.dashify(qualifiedViewName) : qualifiedViewName);
 
         MvcModelData.MvcModelDataBuilder builder = MvcModelData.builder();
         switch (parts.size()) {

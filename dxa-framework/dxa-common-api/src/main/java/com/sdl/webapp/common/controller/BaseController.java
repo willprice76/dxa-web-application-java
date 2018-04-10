@@ -31,6 +31,7 @@ import static com.sdl.webapp.common.api.model.mvcdata.DefaultsMvcData.getDefault
 
 /**
  * Abstract superclass for controllers with utility methods and exception handling.
+ * @dxa.publicApi
  */
 @Controller
 @Slf4j
@@ -106,7 +107,7 @@ public abstract class BaseController {
             }
         }
 
-        return (ViewModel) processModel(model, model.getClass());
+        return model;
     }
 
     /**
@@ -130,20 +131,6 @@ public abstract class BaseController {
     @Nullable
     protected Validator dataBindValidator() {
         return null;
-    }
-
-    /**
-     * This is the method to override if you need to add custom model population logic, first calling the base class and then adding your own logic
-     *
-     * @param sourceModel The model to process
-     * @param type        The type of view model required
-     * @return A processed view model
-     * @deprecated Deprecated in DXA 1.1. Override EnrichModel instead.
-     */
-    @Deprecated
-    protected Object processModel(Object sourceModel, Class type) {
-        // NOTE: Intentionally loosely typed for backwards compatibility; this was part of the V1.0 (semi-)public API
-        return sourceModel;
     }
 
     /**

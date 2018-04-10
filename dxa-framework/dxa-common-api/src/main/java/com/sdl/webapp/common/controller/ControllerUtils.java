@@ -9,6 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @dxa.publicApi
+ */
 public final class ControllerUtils {
 
     public static final String INCLUDE_PATH_PREFIX = "/system/mvc/";
@@ -18,10 +21,6 @@ public final class ControllerUtils {
     public static final String INCLUDE_MAPPING = INCLUDE_PATH_PREFIX + FRAMEWORK_CONTROLLER_MAPPING;
 
     public static final String SECTION_ERROR_VIEW = "Shared/Error/SectionError";
-
-    @Deprecated
-    //todo dxa2 remove
-    public static final String NOT_FOUND_ERROR_VIEW = "Shared/Error/NotFoundError";
 
     public static final String SERVER_ERROR_VIEW = "Shared/Error/ServerError";
 

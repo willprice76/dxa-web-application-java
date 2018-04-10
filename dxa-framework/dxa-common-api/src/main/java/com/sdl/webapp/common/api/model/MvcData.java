@@ -4,6 +4,8 @@ import java.util.Map;
 
 /**
  * Data for the MVC framework to determine how a view model object should be handled.
+ *
+ * @dxa.publicApi
  */
 public interface MvcData {
 
@@ -23,17 +25,15 @@ public interface MvcData {
 
     Map<String, String> getRouteValues();
 
+    /**
+     * Makes a deep copy of the current object.
+     * It is important that {@code mvcData.deepCopy != mvcData && mvcData.equals(mvcData.deepCopy())} evaluates to {@code true}
+     *
+     * @return a deep copy
+     */
     MvcData deepCopy();
 
-    /**
-     * <p>Returns a map of metadata for current MvcData.</p>
-     * todo dxa2 will return a copy
-     *
-     * @return a {@link java.util.Map} object with metadata
-     */
-    @Deprecated
     Map<String, Object> getMetadata();
 
-    @Deprecated
     void addMetadataValue(String key, Object obj);
 }
