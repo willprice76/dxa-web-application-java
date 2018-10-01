@@ -2,6 +2,7 @@ package com.sdl.dxa.caching;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachingConfigurerSupport;
 import org.springframework.cache.annotation.EnableCaching;
@@ -25,13 +26,17 @@ public class TridionCacheConfiguration extends CachingConfigurerSupport {
     private final NamedCacheProvider defaultCacheProvider;
 
     @Autowired
+    @Qualifier("compositeCacheManager")
+    CacheManager compositeCacheManager;
+
+    @Autowired
     public TridionCacheConfiguration(LocalizationAwareKeyGenerator localizationAwareKeyGenerator,
                                      NamedCacheProvider defaultCacheProvider) {
         this.localizationAwareKeyGenerator = localizationAwareKeyGenerator;
         this.defaultCacheProvider = defaultCacheProvider;
     }
 
-    @Bean
+    @Bean(name="compositeCacheManager")
     @Override
     public CacheManager cacheManager() {
         CompositeCacheManager compositeCacheManager = new CompositeCacheManager(
@@ -49,8 +54,16 @@ public class TridionCacheConfiguration extends CachingConfigurerSupport {
     @Override
     public CacheResolver cacheResolver() {
         return context -> context.getOperation().getCacheNames().stream()
-                .map(name -> cacheManager().getCache(name))
-                .peek(cache -> log.trace("Resolved cache {} which is a {} cache", cache.getName(), cache.getClass()))
+                .peek(name -> log.debug("Requested cache name = '{}', cache manager caches = {}", name, compositeCacheManager.getCacheNames()))
+                .map(name -> compositeCacheManager.getCache(name))
+                .peek(cache -> {
+                    if (cache == null) {
+                        log.warn("Cache {} is not found");
+                    } else {
+                        log.debug("Resolved cache {} which is a {} cache", cache.getName(), cache.getClass());
+                    }
+                })
                 .collect(Collectors.toList());
     }
+
 }
