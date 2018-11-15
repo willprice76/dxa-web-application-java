@@ -1,5 +1,7 @@
 package com.sdl.webapp.common.util;
 
+import com.sdl.dxa.api.datamodel.Constants;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 
@@ -8,6 +10,7 @@ import java.util.regex.Pattern;
 
 /**
  * Simple utility functions to process TCM-URIs.
+ *
  * @dxa.publicApi
  */
 @Slf4j
@@ -35,11 +38,11 @@ public final class TcmUtils {
 
     public static final int KEYWORD_ITEM_TYPE = 1024;
 
-    private static final String DEFAULT_NAMESPACE = "tcm";
+    private static final String DEFAULT_NAMESPACE = Constants.DEFAULT_NAMESPACE;
 
-    private static final String TCM_S_S = "%s:%s-%s";
+    private static final String NS_ID_ID = "%s:%s-%s";
 
-    private static final String TCM_S_S_S = "%s:%s-%s-%s";
+    private static final String NS_ID_ID_ID = "%s:%s-%s-%s";
 
     private static final Pattern URI_SCHEMA = Pattern.compile("(?<namespace>tcm|ish):(?<publicationId>\\d+)-(?<itemId>\\d+)(-(?<itemType>\\d+))?");
 
@@ -148,7 +151,7 @@ public final class TcmUtils {
     /**
      * Build a page TCM URI looking like <code>NAMESPACE:PUB_ID-ITEM_ID-32</code>.
      *
-     * @param namespace @param Custom namespace. At this moment only [tcm, ish] are supported
+     * @param namespace     Custom namespace. At this moment only [tcm, ish] are supported
      * @param publicationId publication ID
      * @param itemId        item ID
      * @return TCM URI for page
@@ -158,10 +161,17 @@ public final class TcmUtils {
     }
 
     /**
-     * See {@link #buildKeywordTcmUri(String, String)}.
+     * See {@link #buildKeywordTcmUri(int, int)}.
      */
     public static String buildKeywordTcmUri(int publicationId, int itemId) {
         return buildKeywordTcmUri(String.valueOf(publicationId), String.valueOf(itemId));
+    }
+
+    /**
+     * See {@link #buildKeywordTcmUri(String, String, String)}.
+     */
+    public static String buildKeywordTcmUri(String namespace, int publicationId, int itemId) {
+        return buildKeywordTcmUri(namespace, String.valueOf(publicationId), String.valueOf(itemId));
     }
 
     /**
@@ -173,6 +183,18 @@ public final class TcmUtils {
      */
     public static String buildKeywordTcmUri(String publicationId, String itemId) {
         return buildTcmUri(publicationId, itemId, KEYWORD_ITEM_TYPE);
+    }
+
+    /**
+     * Build a template TCM URI looking like <code>NAMESPACE:PUB_ID-ITEM_ID-1024</code>.
+     *
+     * @param namespace     Custom namespace. At this moment only [tcm, ish] are supported
+     * @param publicationId publication ID
+     * @param itemId        item ID
+     * @return TCM URI for keyword
+     */
+    public static String buildKeywordTcmUri(String namespace, String publicationId, String itemId) {
+        return buildTcmUri(namespace, publicationId, itemId, KEYWORD_ITEM_TYPE);
     }
 
     /**
@@ -210,7 +232,7 @@ public final class TcmUtils {
     }
 
     private static String buildTcmUriInternal(String namespace, String publicationId, String itemId) {
-        return String.format(TCM_S_S, namespace, publicationId, itemId);
+        return String.format(NS_ID_ID, namespace, publicationId, itemId);
     }
 
     /**
@@ -250,11 +272,11 @@ public final class TcmUtils {
     }
 
     private static String buildTcmUriInternal(String namespace, String publicationId, String itemId, String itemType) {
-        return String.format(TCM_S_S_S, namespace, publicationId, itemId, itemType);
+        return String.format(NS_ID_ID_ID, namespace, publicationId, itemId, itemType);
     }
 
     private static String buildTcmUriInternalForRootPublication(String namespace, String publicationId, String itemType) {
-        return String.format(TCM_S_S_S, namespace, "0", publicationId, itemType);
+        return String.format(NS_ID_ID_ID, namespace, "0", publicationId, itemType);
     }
 
     /**
@@ -264,22 +286,23 @@ public final class TcmUtils {
      * @return item type ID or <code>-1</code> if URI is not valid or null
      */
     public static int getItemType(String tcmUri) {
-        int itemType = extractGroupFromTcm(tcmUri, "itemType");
-        return itemType == -2 ? COMPONENT_ITEM_TYPE : itemType;
+        ExtractResult extractResult = extractGroupFromTcm(tcmUri, "itemType");
+        return extractResult.status == ExtractStatus.NO_MATCH ? COMPONENT_ITEM_TYPE : extractResult.getInt();
     }
 
-    private static int extractGroupFromTcm(String tcmUri, String group) {
-        int failed = -1;
+    private static ExtractResult extractGroupFromTcm(String tcmUri, String group) {
         if (tcmUri == null) {
-            return failed;
+            return new ExtractResult(ExtractStatus.FAILED, null);
         }
 
         Matcher matcher = URI_SCHEMA.matcher(tcmUri);
         if (matcher.matches()) {
             String match = matcher.group(group);
-            return match != null ? Integer.parseInt(match) : -2;
+            return match == null ?
+                    new ExtractResult(ExtractStatus.NO_MATCH, null) :
+                    new ExtractResult(ExtractStatus.SUCCESS, match);
         }
-        return failed;
+        return new ExtractResult(ExtractStatus.FAILED, null);
     }
 
     /**
@@ -289,7 +312,7 @@ public final class TcmUtils {
      * @return publication ID or <code>-1</code> if URI is not valid or null
      */
     public static int getPublicationId(String tcmUri) {
-        return extractGroupFromTcm(tcmUri, "publicationId");
+        return extractGroupFromTcm(tcmUri, "publicationId").getInt();
     }
 
     /**
@@ -312,7 +335,18 @@ public final class TcmUtils {
      * @return item ID or <code>-1</code> if URI is not valid or null
      */
     public static int getItemId(String tcmUri) {
-        return extractGroupFromTcm(tcmUri, "itemId");
+        return extractGroupFromTcm(tcmUri, "itemId").getInt();
+    }
+
+    /**
+     * Extracts namespace from a valid TCM URI.
+     *
+     * @param tcmUri tcm uri to process
+     * @return namespace or <code>-1</code> if URI is not valid or null
+     */
+    public static String getNamespace(String tcmUri) {
+        ExtractResult extractResult = extractGroupFromTcm(tcmUri, "namespace");
+        return extractResult.status == ExtractStatus.SUCCESS ? extractResult.result : null;
     }
 
     /**
@@ -366,6 +400,22 @@ public final class TcmUtils {
      */
     public static boolean isTcmUri(@Nullable Object tcmUri) {
         return tcmUri != null && URI_SCHEMA.matcher(String.valueOf(tcmUri)).matches();
+    }
+
+    private enum ExtractStatus {
+        FAILED, NO_MATCH, SUCCESS
+    }
+
+    @Value
+    private static class ExtractResult {
+
+        private ExtractStatus status;
+
+        private String result;
+
+        public int getInt() {
+            return status != ExtractStatus.SUCCESS || result == null ? -1 : Integer.parseInt(result);
+        }
     }
 
     /**

@@ -14,6 +14,7 @@ import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriUtils;
 
@@ -26,6 +27,7 @@ import java.util.Map;
  * Implementation of {@code LocalizationResolver} that uses the Tridion API to determine the localization for a request.
  */
 @Component
+@Profile("cil.providers.active")
 public class TridionLocalizationResolver implements LocalizationResolver {
 
     private static final Logger LOG = LoggerFactory.getLogger(TridionLocalizationResolver.class);
@@ -69,7 +71,7 @@ public class TridionLocalizationResolver implements LocalizationResolver {
         PublicationMappingData data = getPublicationMappingData(path);
 
         if (data == null) {
-            throw new LocalizationResolverException("Publication mapping is not resolved!");
+            throw new LocalizationResolverException("Publication mapping is not resolved for URL: " + url);
         }
 
         if (!localizations.containsKey(data.id)) {
@@ -100,17 +102,14 @@ public class TridionLocalizationResolver implements LocalizationResolver {
             PublicationMapping publicationMapping = dynamicMappingsRetriever.getPublicationMapping(url);
 
             if (publicationMapping == null) {
-                throw new PublicationMappingNotFoundException("Publication mapping not found. " +
-                        "Check if your cd_dynamic_conf.xml configuration file contains a publication mapping " +
+                throw new PublicationMappingNotFoundException("Publication mapping not found. There is no any publication mapping " +
                         "that matches this URL: " + url);
             }
 
-            return new PublicationMappingData(
-                    String.valueOf(publicationMapping.getPublicationId()),
+            return new PublicationMappingData(String.valueOf(publicationMapping.getPublicationId()),
                     getPublicationMappingPath(publicationMapping.getPath()));
-        } catch (ConfigurationException e) {
-            LOG.error("Configuration exception", e);
-            return null;
+        } catch (ConfigurationException ex) {
+            throw new PublicationMappingNotFoundException("Error found during fetch publication mapping not found for URL: " + url, ex);
         }
     }
 
@@ -118,7 +117,7 @@ public class TridionLocalizationResolver implements LocalizationResolver {
         try {
             return localizationFactory.createLocalization(id, path);
         } catch (LocalizationFactoryException e) {
-            throw new LocalizationResolverException("Exception while creating localization: [" + id + "] " + path, e);
+            throw new LocalizationResolverException("Could not create a localization for pubId: [" + id + "] and path: [" + path + "]", e);
         }
     }
 

@@ -115,6 +115,25 @@
             </dependencies>
         </profile>
         <profile>
+            <id>tridion-docs-module</id>
+            <dependencies>
+                <dependency>
+                    <groupId>com.sdl.dxa.modules</groupId>
+                    <artifactId>dxa-module-tridion-docs</artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>tridion-docs-search-module</id>
+            <dependencies>
+                <dependency>
+                    <groupId>com.sdl.dxa.modules</groupId>
+                    <artifactId>dxa-module-tridion-docs-search</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
             <id>test-module</id>
             <dependencies>
                 <dependency>
@@ -140,6 +159,24 @@
                 <dependency>
                     <groupId>com.sdl.dxa.modules</groupId>
                     <artifactId>dxa-module-smarttarget</artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>ugc-module</id>
+            <dependencies>
+                <dependency>
+                    <groupId>com.sdl.dxa.modules</groupId>
+                    <artifactId>dxa-module-ugc</artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>tridion-docs-mashup-module</id>
+            <dependencies>
+                <dependency>
+                    <groupId>com.sdl.dxa.modules</groupId>
+                    <artifactId>dxa-module-tridion-docs-mashup</artifactId>
                 </dependency>
             </dependencies>
         </profile>

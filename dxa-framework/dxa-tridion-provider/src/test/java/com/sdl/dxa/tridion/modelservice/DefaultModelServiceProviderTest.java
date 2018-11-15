@@ -9,6 +9,7 @@ import com.sdl.web.client.configuration.api.ConfigurationException;
 import com.sdl.webapp.common.api.content.ContentProviderException;
 import com.sdl.webapp.common.api.localization.Localization;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -20,7 +21,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-public class DefaultModelServiceTest {
+public class DefaultModelServiceProviderTest {
 
     @Mock
     private ModelServiceConfiguration configuration;
@@ -32,9 +33,9 @@ public class DefaultModelServiceTest {
     private ModelServiceClient modelServiceClient;
 
     @InjectMocks
-    private DefaultModelService service;
+    private DefaultModelServiceProvider service;
 
-    public DefaultModelServiceTest() throws ConfigurationException {
+    public DefaultModelServiceProviderTest() throws ConfigurationException {
     }
 
     @Before
@@ -53,7 +54,7 @@ public class DefaultModelServiceTest {
         PageModelData modelData = new PageModelData();
         modelData.setId("123");
         when(modelServiceClient.getForType(eq("/model-service/page"), eq(PageModelData.class), eq("tcm"), eq(42),
-                eq("/path"), eq(PageRequestDto.PageInclusion.INCLUDE))).thenReturn(modelData);
+                eq("path"), eq(PageRequestDto.PageInclusion.INCLUDE))).thenReturn(modelData);
 
         //when
         PageModelData pageModelData = service.loadPageModel(pageRequest);
@@ -69,7 +70,7 @@ public class DefaultModelServiceTest {
                 .uriType("tcm").includePages(PageRequestDto.PageInclusion.INCLUDE)
                 .build();
         when(modelServiceClient.getForType(eq("/model-service/page?raw=true"), eq(String.class), eq("tcm"), eq(666),
-                eq("/path"), eq(PageRequestDto.PageInclusion.INCLUDE))).thenReturn("hello");
+                eq("path"), eq(PageRequestDto.PageInclusion.INCLUDE))).thenReturn("hello");
 
         //when
         String pageModelData = service.loadPageContent(pageRequest);
